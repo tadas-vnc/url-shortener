@@ -4,9 +4,9 @@ from database import add_url, get_url, check_password, alias_exists
 import random
 import string
 import sqlite3
-from gevent.pywsgi import WSGIServer
+from flask_cors import CORS
 app = Flask(__name__)
-
+CORS(app)
 def generate_random_alias(length=6):
     alias = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
     while alias_exists(alias):  
