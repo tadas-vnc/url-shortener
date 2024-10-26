@@ -9,7 +9,7 @@ def init_db():
             source_url TEXT NOT NULL,
             short_url TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
-            created_at INTEGER DEFAULT strftime("%s")
+            created_at INTEGER 
         )
     ''')
     conn.commit()
@@ -18,7 +18,7 @@ def init_db():
 def add_url(source_url, short_url, password):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute('INSERT INTO urls (source_url, short_url, password) VALUES (?, ?, ?)',
+    c.execute('INSERT INTO urls (source_url, short_url, password, created_at) VALUES (?, ?, ?, strftime("%s"))',
               (source_url, short_url, password))
     conn.commit()
     conn.close()
@@ -39,4 +39,13 @@ def check_password(short_url, password):
     conn.close()
     return stored_password[0] == password if stored_password else False
 
-init_db()  # Initialize the database
+def alias_exists(alias):
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute('SELECT 1 FROM urls WHERE short_url = ?', (alias,))
+    exists = c.fetchone() is not None
+    conn.close()
+    return exists
+
+init_db()
+
