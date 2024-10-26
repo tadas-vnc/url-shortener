@@ -5,8 +5,17 @@ import random
 import string
 import sqlite3
 from flask_cors import CORS
+import re
 app = Flask(__name__)
 CORS(app)
+def is_valid_link(link):
+    link_regex = r"^(https?://.{1,995})$"
+    return bool(re.match(link_regex, link))
+
+def is_valid_string(s):
+    string_regex = r"^[a-zA-Z0-9_]{2,16}$"
+    return bool(re.match(string_regex, s))
+
 def generate_random_alias(length=6):
     alias = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
     while alias_exists(alias):  
@@ -21,10 +30,17 @@ def shorten_url():
     data = request.json
     source_url = data.get('source_url')
     alias = data.get('alias', generate_random_alias())
+    alias = alias.lower()
     password = data.get('password', generate_random_password())
-
+    if(not is_valid_string(alias)):
+        return jsonify({'error': 'Custom alias is not a valid, only lating letters, numbers and underscore is allowed.'}), 400
+    if(not is_valid_string(password)):
+        return jsonify({'error': 'Custom password is not a valid, only lating letters, numbers and underscore is allowed.'}), 400
     if not source_url:
         return jsonify({'error': 'source_url is required'}), 400
+
+    if not is_valid_link(source_url):
+        return jsonify({'error': 'Source URL is not valid, source URL must start with "http" and not exceed 1000 character limit.'}), 400
 
     if alias_exists(alias):
         return jsonify({'error': 'Alias already taken, please choose a different alias'}), 400
@@ -34,7 +50,8 @@ def shorten_url():
     return jsonify({
         'short_url': short_url,
         'alias': alias,
-        'password': password
+        'password': password,
+        'success': 'Short url created successfully.'
     }), 201
 
 @app.route('/<short_url>', methods=['GET'])
@@ -48,20 +65,27 @@ def redirect_to_url(short_url):
 def update_url():
     data = request.json
     alias = data.get('alias')
+    alias = alias.lower()
     password = data.get('password')
     new_source_url = data.get('new_source_url')
     new_alias = data.get('new_alias')
     new_password = data.get('new_password')
-
+     if not is_valid_link(new_source_url):
+        return jsonify({'error': 'Source URL is not valid, source URL must start with "http" and not exceed 1000 character limit.'}), 400
     if not alias or not password:
         return jsonify({'error': 'alias and password are required'}), 400
 
     if not check_password(alias, password):
         return jsonify({'error': 'Invalid password'}), 403
 
-    if new_alias and alias_exists(new_alias):
+    if new_alias and alias_exists(new_alias) and new_alias != alias:
+        new_alias = new_alias.lower()
+        if(not is_valid_string(new_alias)):
+            return jsonify({'error': 'Custom alias is not a valid, only lating letters, numbers and underscore is allowed.'}), 400
         return jsonify({'error': 'New alias already taken, please choose a different alias'}), 400
 
+    if(new_password and not is_valid_string(new_password)):
+        return jsonify({'error': 'Custom password is not a valid, only lating letters, numbers and underscore is allowed.'}), 400
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     if new_alias:
