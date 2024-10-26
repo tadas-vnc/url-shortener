@@ -62,7 +62,7 @@ def update_url():
     if new_alias and alias_exists(new_alias):
         return jsonify({'error': 'New alias already taken, please choose a different alias'}), 400
 
-    conn = sqlite3.connect('urls.db')
+    conn = sqlite3.connect('database.db')
     c = conn.cursor()
     if new_alias:
         c.execute('UPDATE urls SET short_url = ? WHERE short_url = ?', (new_alias, alias))
@@ -88,7 +88,7 @@ def delete_url():
     if not check_password(alias, password):
         return jsonify({'error': 'Invalid password'}), 403
 
-    conn = sqlite3.connect('urls.db')
+    conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute('DELETE FROM urls WHERE short_url = ?', (alias,))
     conn.commit()
