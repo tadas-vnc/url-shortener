@@ -85,10 +85,11 @@ def update_url():
 
     if new_alias and alias_exists(new_alias) and new_alias != alias:
         new_alias = new_alias.lower()
+        return jsonify({'error': 'New alias already taken, please choose a different alias'}), 400
+    if new_alias:
         if(not is_valid_string(new_alias)):
             return jsonify({'error': 'Custom alias is not a valid, only lating letters, numbers and underscore is allowed.'}), 400
-        return jsonify({'error': 'New alias already taken, please choose a different alias'}), 400
-
+    
     if(new_password and not is_valid_string(new_password)):
         return jsonify({'error': 'Custom password is not a valid, only lating letters, numbers and underscore is allowed.'}), 400
     conn = sqlite3.connect('database.db')
