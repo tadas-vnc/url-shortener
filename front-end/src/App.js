@@ -15,7 +15,13 @@ function App() {
   const [openPopup, setOpenPopup] = useState(false);
   const [resultUrl, setResultUrl] = useState("")
   const [resultPassword, setResultPassword] = useState("")
-  
+  const [editAlias, setEditAlias] = useState("")
+  const [editPassword, setEditPassword] = useState("")
+  const [deleteAlias, setDeleteAlias] = useState("")
+  const [deletePassword, setDeletePassword] = useState("")
+  const [newEditSource, setNewEditSource] = useState("")
+  const [newEditPassword, setNewEditPassword] = useState("")
+  const [newEditAlias, setNewEditAlias] = useState("")
   function back(){
     setCreateMode(false)
     setDeleteMode(false)
@@ -64,6 +70,91 @@ function App() {
       setIsSuccess(false)
     })
   }
+  function submitDelete(){
+    setIsButtonDisabled(true)
+    let data = {}
+    if(!deleteAlias){
+      setIsButtonDisabled(false)
+      setResponseMessage("Current link alias or URL is required.")
+      setIsSuccess(false)
+      return
+    }
+    if(!deletePassword){
+      setIsButtonDisabled(false)
+      setResponseMessage("Current link password is required.")
+      setIsSuccess(false)
+      return
+    }
+    
+    data.alias = deleteAlias
+    if(deleteAlias.includes("/")){
+      data.alias = deleteAlias.split("/")[deleteAlias.split("/").length -1]
+    }
+    data.password = deletePassword
+    fetch(apiEndpoint + "delete", {
+      body: JSON.stringify(data),
+      method: "DELETE",
+      headers: {'content-type':'application/json'}
+    }).then(res=>{return res.json();}).then(data=>{
+      if(data.error){
+        setResponseMessage(data.error)
+        setIsSuccess(false)
+        setIsButtonDisabled(false)
+      }else{
+        setResponseMessage(data.success)
+        setIsSuccess(true)
+        setIsButtonDisabled(false)
+      }
+    }).catch(e=>{
+      setResponseMessage("Error during fetch request: "+ e.toString())
+      setIsSuccess(false)
+    })
+  }
+
+    function submitEdit(){
+      setIsButtonDisabled(true)
+      let data = {}
+      if(!editAlias){
+        setIsButtonDisabled(false)
+        setResponseMessage("Current link alias or URL is required.")
+        setIsSuccess(false)
+        return
+      }
+      if(!editPassword){
+        setIsButtonDisabled(false)
+        setResponseMessage("Current link password is required.")
+        setIsSuccess(false)
+        return
+      }
+      
+      data.new_alias = newEditAlias || data.new_alias
+      data.new_password = newEditPassword || data.new_password
+      data.new_source_url = newEditSource || data.new_source_url
+      data.alias = editAlias
+      if(editAlias.includes("/")){
+        data.alias = editAlias.split("/")[editAlias.split("/").length -1]
+      }
+      data.password = editPassword
+      fetch(apiEndpoint + "update", {
+        body: JSON.stringify(data),
+        method: "POST",
+        headers: {'content-type':'application/json'}
+      }).then(res=>{return res.json();}).then(data=>{
+        if(data.error){
+          setResponseMessage(data.error)
+          setIsSuccess(false)
+          setIsButtonDisabled(false)
+        }else{
+          setResponseMessage(data.success)
+          setIsSuccess(true)
+          setIsButtonDisabled(false)
+        }
+      }).catch(e=>{
+        setResponseMessage("Error during fetch request: "+ e.toString())
+        setIsSuccess(false)
+      })
+    }
+  
   function writeClipboard(id){
     var copyText = document.getElementById(id);
     try{
@@ -151,6 +242,74 @@ function App() {
           
         </>}
 
+        {editMode && <>
+          <h2 className='text-center'>Edit short URL</h2>
+          <div className='center justify-content-around'>
+            <h3 className='w-100 text-center'>Current short URL data:</h3>
+            <div className=''>
+            <FormLabel>Current link or alias</FormLabel>
+            <InputGroup style={{width:fieldSize}} className="">
+              <InputGroup.Text><svg height="24px" viewBox="0 0 24 24" fill="#e8eaed" xmlns="http://www.w3.org/2000/svg"><path d="M16 3L8 21" stroke="#e8eaed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></InputGroup.Text>
+              <Form.Control aria-label="link" placeholder='alias' type="text" value={editAlias} onInput={(e)=>{setEditAlias(e.target.value);}}/>
+            </InputGroup>
+            </div>
+            <div className=''>
+            <FormLabel>Current password</FormLabel>
+            <InputGroup style={{width:fieldSize}} className="">
+              <InputGroup.Text><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg></InputGroup.Text>
+              <Form.Control aria-label="link" placeholder='password' type="text" value={editPassword} onInput={(e)=>{setEditPassword(e.target.value);}}/>
+            </InputGroup>
+            </div>
+            <h3 className='w-100 text-center'>New short URL data:</h3>
+            <div className=''>
+            <FormLabel>New source link </FormLabel>
+            <InputGroup style={{width:fieldSize}} className="">
+              <InputGroup.Text><svg xmlns="http://www.w3.org/2000/svg" height="100%" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm200 160v-80h160q50 0 85-35t35-85q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H520Z"/></svg></InputGroup.Text>
+              <Form.Control aria-label="link" placeholder='https://... (optional)' type="text" value={newEditSource} onInput={(e)=>{setNewEditSource(e.target.value);}}/>
+            </InputGroup>
+            </div>
+            <div className=''>
+            <FormLabel>New alias, custom link</FormLabel>
+            <InputGroup style={{width:fieldSize}} className="">
+              <InputGroup.Text><svg height="24px" viewBox="0 0 24 24" fill="#e8eaed" xmlns="http://www.w3.org/2000/svg"><path d="M16 3L8 21" stroke="#e8eaed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></InputGroup.Text>
+              <Form.Control aria-label="link" placeholder='alias (optional)' type="text" value={newEditAlias} onInput={(e)=>{setNewEditAlias(e.target.value);}}/>
+            </InputGroup>
+            </div>
+            <div className=''>
+            <FormLabel>New custom password</FormLabel>
+            <InputGroup style={{width:fieldSize}} className="">
+              <InputGroup.Text><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg></InputGroup.Text>
+              <Form.Control aria-label="link" placeholder='custom password (optional)' type="text" value={newEditPassword} onInput={(e)=>{setNewEditPassword(e.target.value);}}/>
+            </InputGroup>
+            </div>
+            <hr className='w-100'></hr>
+            <Button onClick={(e)=>{submitEdit();}} disabled={isButtonDisabled}>Submit</Button>
+          </div>
+          
+        </>}
+
+        {deleteMode && <>
+          <h2 className='text-center'>Delete short URL</h2>
+          <div className='center justify-content-around'>
+            <div className=''>
+            <FormLabel>Short link or alias</FormLabel>
+            <InputGroup style={{width:fieldSize}} className="">
+              <InputGroup.Text><svg height="24px" viewBox="0 0 24 24" fill="#e8eaed" xmlns="http://www.w3.org/2000/svg"><path d="M16 3L8 21" stroke="#e8eaed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></InputGroup.Text>
+              <Form.Control aria-label="link" placeholder='alias' type="text" value={deleteAlias} onInput={(e)=>{setDeleteAlias(e.target.value);}}/>
+            </InputGroup>
+            </div>
+            <div className=''>
+            <FormLabel>Password</FormLabel>
+            <InputGroup style={{width:fieldSize}} className="">
+              <InputGroup.Text><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm240-120q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z"/></svg></InputGroup.Text>
+              <Form.Control aria-label="link" placeholder='password' type="text" value={deletePassword} onInput={(e)=>{setDeletePassword(e.target.value);}}/>
+            </InputGroup>
+            </div>
+            <hr className='w-100'></hr>
+            <Button onClick={(e)=>{submitDelete();}} disabled={isButtonDisabled}>Submit</Button>
+          </div>
+          
+        </>}
         <div className='center justify-content-around'>
             {responseMessage && 
               <Alert variant={isSuccess ? "success" : "danger"} dismissible={true} onClose={() => setResponseMessage("")}>

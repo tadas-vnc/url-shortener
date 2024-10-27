@@ -9,10 +9,14 @@ import re
 app = Flask(__name__)
 CORS(app)
 def is_valid_link(link):
+    if(link is None):
+        return False
     link_regex = r"^(https?://.{1,995})$"
     return bool(re.match(link_regex, link))
 
 def is_valid_string(s):
+    if(s is None):
+        return False
     string_regex = r"^[a-zA-Z0-9_]{2,16}$"
     return bool(re.match(string_regex, s))
 
@@ -68,15 +72,16 @@ def update_url():
     alias = alias.lower()
     password = data.get('password')
     new_source_url = data.get('new_source_url')
+    print(new_source_url)
     new_alias = data.get('new_alias')
     new_password = data.get('new_password')
-     if not is_valid_link(new_source_url):
+    if new_source_url and not is_valid_link(new_source_url):
         return jsonify({'error': 'Source URL is not valid, source URL must start with "http" and not exceed 1000 character limit.'}), 400
     if not alias or not password:
         return jsonify({'error': 'alias and password are required'}), 400
 
     if not check_password(alias, password):
-        return jsonify({'error': 'Invalid password'}), 403
+        return jsonify({'error': 'Invalid password or alias'}), 403
 
     if new_alias and alias_exists(new_alias) and new_alias != alias:
         new_alias = new_alias.lower()
@@ -110,7 +115,7 @@ def delete_url():
         return jsonify({'error': 'alias and password are required'}), 400
 
     if not check_password(alias, password):
-        return jsonify({'error': 'Invalid password'}), 403
+        return jsonify({'error': 'Invalid password or alias'}), 403
 
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
